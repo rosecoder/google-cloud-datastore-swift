@@ -3,20 +3,20 @@ import GoogleCloudDatastore
 
 public actor FakeDatastore: DatastoreProtocol {
 
-    public init() {}
+  public init() {}
 
-    let encoder = JSONEncoder()
-    let decoder = JSONDecoder()
+  let encoder = JSONEncoder()
+  let decoder = JSONDecoder()
 
-    var storage = [String: Data]()
+  var storage = [String: Data]()
 
-    var allocatedIDsCounter: Int64 = 0
+  var allocatedIDsCounter: Int64 = 0
 
-    func storageKey<Key: AnyKey>(fromEntityKey key: Key) -> String {
-        key.debugDescription
-    }
+  func storageKey<Key: AnyKey>(fromEntityKey key: Key) -> String {
+    key.debugDescription
+  }
 
-    func storageKeys<Key: AnyKey>(fromEntityKeys keys: [Key]) -> [String] {
-        keys.map { storageKey(fromEntityKey: $0) }
-    }
+  func storageKeys<Key: AnyKey>(fromEntityKeys keys: [Key]) -> [String] {
+    keys.map { storageKey(fromEntityKey: $0) }
+  }
 }

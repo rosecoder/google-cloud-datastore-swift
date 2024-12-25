@@ -1,59 +1,59 @@
-import Testing
 import Foundation
 import GoogleCloudDatastore
+import Testing
 
 @Suite(.enabled(if: ProcessInfo.processInfo.environment["DATASTORE_EMULATOR_HOST"] != nil))
 struct PutTests {
 
-    let datastore: Datastore
-    let runTask: Task<Void, Error>
+  let datastore: Datastore
+  let runTask: Task<Void, Error>
 
-    init() throws {
-        let datastore = try Datastore(projectID: "test-get-tests-\(UUID().uuidString.lowercased())")
-        self.datastore = datastore
-        self.runTask = Task { try await datastore.run() }
+  init() throws {
+    let datastore = try Datastore(projectID: "test-get-tests-\(UUID().uuidString.lowercased())")
+    self.datastore = datastore
+    self.runTask = Task { try await datastore.run() }
+  }
+
+  @Test func putNewWithIncompleteKey() async throws {
+    var user = User(key: .incomplete, email: "testing")
+    try await datastore.put(entity: &user)
+
+    switch user.key.id {
+    case .uniq(let id):
+      #expect(id > 0)
+    default:
+      Issue.record("Key is not set: \(user.key)")
     }
 
-    @Test func putNewWithIncompleteKey() async throws {
-        var user = User(key: .incomplete, email: "testing")
-        try await datastore.put(entity: &user)
+    let putUser = try #require(try await datastore.getEntity(User.self, key: user.key))
+    #expect(putUser == user)
+  }
 
-        switch user.key.id {
-        case .uniq(let id):
-            #expect(id > 0)
-        default:
-            Issue.record("Key is not set: \(user.key)")
-        }
+  @Test func putNewWithUniqKey() async throws {
+    let key = User.Key.uniq(235798)
 
-        let putUser = try #require(try await datastore.getEntity(User.self, key: user.key))
-        #expect(putUser == user)
-    }
+    let exists = try await datastore.containsEntity(key: key)
+    #expect(exists == false, "Precondition: User should not exist before test starts.")
 
-    @Test func putNewWithUniqKey() async throws {
-        let key = User.Key.uniq(235798)
+    var user = User(key: key, email: "testing")
+    try await datastore.put(entity: &user)
+    #expect(user.key == key)
 
-        let exists = try await datastore.containsEntity(key: key)
-        #expect(exists == false, "Precondition: User should not exist before test starts.")
+    let putUser = try #require(try await datastore.getEntity(User.self, key: user.key))
+    #expect(putUser == user)
+  }
 
-        var user = User(key: key, email: "testing")
-        try await datastore.put(entity: &user)
-        #expect(user.key == key)
+  @Test func putNewWithNamedKey() async throws {
+    let key = User.Key.named("zg4bi")
 
-        let putUser = try #require(try await datastore.getEntity(User.self, key: user.key))
-        #expect(putUser == user)
-    }
+    let exists = try await datastore.containsEntity(key: key)
+    #expect(exists == false, "Precondition: User should not exist before test starts.")
 
-    @Test func putNewWithNamedKey() async throws {
-        let key = User.Key.named("zg4bi")
+    var user = User(key: key, email: "testing")
+    try await datastore.put(entity: &user)
+    #expect(user.key == key)
 
-        let exists = try await datastore.containsEntity(key: key)
-        #expect(exists == false, "Precondition: User should not exist before test starts.")
-
-        var user = User(key: key, email: "testing")
-        try await datastore.put(entity: &user)
-        #expect(user.key == key)
-
-        let putUser = try #require(try await datastore.getEntity(User.self, key: user.key))
-        #expect(putUser == user)
-    }
+    let putUser = try #require(try await datastore.getEntity(User.self, key: user.key))
+    #expect(putUser == user)
+  }
 }
