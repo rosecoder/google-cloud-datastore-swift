@@ -36,6 +36,7 @@ public protocol DatastoreProtocol: Sendable {
     ) async throws
 
     func getEntities<Entity: _Entity>(
+        _ type: Entity.Type,
         keys: [Entity.Key],
         file: String,
         function: String,
@@ -193,12 +194,13 @@ extension DatastoreProtocol {
     }
 
     public func getEntities<Entity: _Entity>(
+        _ type: Entity.Type = Entity.self,
         keys: [Entity.Key],
         file: String = #fileID,
         function: String = #function,
         line: UInt = #line
     ) async throws -> [Entity?] {
-        try await getEntities(keys: keys, file: file, function: function, line: line)
+        try await getEntities(type, keys: keys, file: file, function: function, line: line)
     }
 
     public func getEntity<Entity: _Entity>(

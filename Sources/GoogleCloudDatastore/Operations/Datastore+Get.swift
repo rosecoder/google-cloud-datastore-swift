@@ -7,6 +7,7 @@ extension Datastore {
     /// - Parameter keys: Keys representing the entities to lookup.
     /// - Returns: Array of decoded entities. Any entity may be `nil` if it didn't exist.
     public func getEntities<Entity: _Entity>(
+        _ type: Entity.Type,
         keys: [Entity.Key],
         file: String,
         function: String,

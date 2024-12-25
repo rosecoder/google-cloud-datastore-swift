@@ -3,6 +3,7 @@ import GoogleCloudDatastore
 extension FakeDatastore {
 
     public func getEntities<Entity: _Entity>(
+        _ type: Entity.Type,
         keys: [Entity.Key],
         file: String,
         function: String,
