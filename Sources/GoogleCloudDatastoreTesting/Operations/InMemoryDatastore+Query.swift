@@ -1,7 +1,7 @@
 import Foundation
 import GoogleCloudDatastore
 
-extension FakeDatastore {
+extension InMemoryDatastore {
 
   // Note: This implementation is a quick hack and super duper non-performant at all
   public func getEntities<Entity: _Entity>(
@@ -81,11 +81,11 @@ extension FakeDatastore {
           return false
         }
       case .hasAncestor:
-        fatalError("Comparison not supported in FakeDatastore yet")
+        fatalError("Comparison not supported in InMemoryDatastore yet")
       case .in:
-        fatalError("Comparison not supported in FakeDatastore yet")
+        fatalError("Comparison not supported in InMemoryDatastore yet")
       case .notIn:
-        fatalError("Comparison not supported in FakeDatastore yet")
+        fatalError("Comparison not supported in InMemoryDatastore yet")
       case .unspecified, .UNRECOGNIZED:
         continue
       }
@@ -111,17 +111,17 @@ extension FakeDatastore {
       return (lhs as? Date)?.timeIntervalSinceReferenceDate
         != expected.timeIntervalSinceReferenceDate
     case .keyValue:
-      fatalError("Comparison not supported in FakeDatastore yet")
+      fatalError("Comparison not supported in InMemoryDatastore yet")
     case .stringValue(let expected):
       return lhs as? String != expected
     case .blobValue(let expected):
       return lhs as? Data != expected
     case .geoPointValue:
-      fatalError("Comparison not supported in FakeDatastore yet")
+      fatalError("Comparison not supported in InMemoryDatastore yet")
     case .entityValue:
-      fatalError("Comparison not supported in FakeDatastore yet")
+      fatalError("Comparison not supported in InMemoryDatastore yet")
     case .arrayValue:
-      fatalError("Comparison not supported in FakeDatastore yet")
+      fatalError("Comparison not supported in InMemoryDatastore yet")
     }
   }
 
@@ -138,17 +138,17 @@ extension FakeDatastore {
     case .timestampValue(let expected):
       return compare(lhs: lhs, rhs: expected)
     case .keyValue:
-      fatalError("Comparison not supported in FakeDatastore yet")
+      fatalError("Comparison not supported in InMemoryDatastore yet")
     case .stringValue(let expected):
       return compare(lhs: lhs, rhs: expected)
     case .blobValue:
-      fatalError("Comparison not supported in FakeDatastore yet")
+      fatalError("Comparison not supported in InMemoryDatastore yet")
     case .geoPointValue:
-      fatalError("Comparison not supported in FakeDatastore yet")
+      fatalError("Comparison not supported in InMemoryDatastore yet")
     case .entityValue:
-      fatalError("Comparison not supported in FakeDatastore yet")
+      fatalError("Comparison not supported in InMemoryDatastore yet")
     case .arrayValue:
-      fatalError("Comparison not supported in FakeDatastore yet")
+      fatalError("Comparison not supported in InMemoryDatastore yet")
     }
   }
 

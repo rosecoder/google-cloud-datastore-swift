@@ -1,6 +1,6 @@
 import GoogleCloudDatastore
 
-extension FakeDatastore {
+extension InMemoryDatastore {
 
   // MARK: - By Key
 

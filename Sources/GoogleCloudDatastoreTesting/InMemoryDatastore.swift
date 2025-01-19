@@ -1,7 +1,7 @@
 import Foundation
 import GoogleCloudDatastore
 
-public actor FakeDatastore: DatastoreProtocol {
+public actor InMemoryDatastore: DatastoreProtocol {
 
   public init() {}
 

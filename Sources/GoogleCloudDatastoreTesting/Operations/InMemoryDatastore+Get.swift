@@ -1,6 +1,6 @@
 import GoogleCloudDatastore
 
-extension FakeDatastore {
+extension InMemoryDatastore {
 
   public func getEntities<Entity: _Entity>(
     _ type: Entity.Type,
