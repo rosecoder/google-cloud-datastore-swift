@@ -2,6 +2,7 @@ import Foundation
 import GRPCCore
 import GRPCNIOTransportHTTP2Posix
 import GoogleCloudAuth
+import GoogleCloudAuthGRPC
 import GoogleCloudServiceContext
 import Logging
 import NIO
@@ -12,7 +13,7 @@ public final class Datastore: DatastoreProtocol, Service {
   let logger = Logger(label: "datastore")
 
   private let authorization: Authorization?
-  private let grpcClient: GRPCClient
+  private let grpcClient: GRPCClient<HTTP2ClientTransport.Posix>
   let client: Google_Datastore_V1_Datastore.ClientProtocol
 
   public enum ConfigurationError: Error {
@@ -64,7 +65,7 @@ public final class Datastore: DatastoreProtocol, Service {
 
   public func run() async throws {
     try await withGracefulShutdownHandler {
-      try await grpcClient.run()
+      try await grpcClient.runConnections()
     } onGracefulShutdown: {
       self.grpcClient.beginGracefulShutdown()
     }

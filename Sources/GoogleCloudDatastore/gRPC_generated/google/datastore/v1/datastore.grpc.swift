@@ -23,6 +23,7 @@
 
 import GRPCCore
 import GRPCProtobuf
+import SwiftProtobuf
 
 // MARK: - google.datastore.v1.Datastore
 
@@ -366,14 +367,14 @@ extension Google_Datastore_V1_Datastore {
     /// > with both an empty path and an empty or unset partition ID. Normalization of
     /// > input keys sets the project ID (if not already set) to the project ID from
     /// > the request.
-    package struct Client: ClientProtocol {
-        private let client: GRPCCore.GRPCClient
+    package struct Client<Transport>: ClientProtocol where Transport: GRPCCore.ClientTransport {
+        private let client: GRPCCore.GRPCClient<Transport>
 
         /// Creates a new client wrapping the provided `GRPCCore.GRPCClient`.
         ///
         /// - Parameters:
         ///   - client: A `GRPCCore.GRPCClient` providing a communication channel to the service.
-        package init(wrapping client: GRPCCore.GRPCClient) {
+        package init(wrapping client: GRPCCore.GRPCClient<Transport>) {
             self.client = client
         }
 
