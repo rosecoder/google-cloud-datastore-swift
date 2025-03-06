@@ -8,14 +8,13 @@ extension InMemoryDatastore {
     function: String,
     line: UInt
   ) async throws {
-    let keysAndData = try entities.map { ($0.key, try encoder.encode($0)) }
-    for (index, (key, data)) in keysAndData.enumerated() {
-      var key = key
+    for (index, entity) in entities.enumerated() {
+      var key = entity.key
       if key.id == .incomplete {
         try await allocateID(&key, file: file, function: function, line: line)
         entities[index].key = key
       }
-      storage[storageKey(fromEntityKey: key)] = data
+      storage[storageKey(fromEntityKey: key)] = try encoder.encode(entity)
     }
   }
 
