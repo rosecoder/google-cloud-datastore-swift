@@ -9,10 +9,12 @@ extension InMemoryDatastore {
     line: UInt
   ) async throws {
     for (index, entity) in entities.enumerated() {
+      var entity = entity
       var key = entity.key
       if key.id == .incomplete {
         try await allocateID(&key, file: file, function: function, line: line)
         entities[index].key = key
+        entity.key = key
       }
       storage[storageKey(fromEntityKey: key)] = try encoder.encode(entity)
     }
