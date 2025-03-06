@@ -102,20 +102,20 @@ extension InMemoryDatastore {
     case .nullValue, .none:
       return false
     case .booleanValue(let expected):
-      return lhs as? Bool != expected
+      return lhs as? Bool == expected
     case .integerValue(let expected):
-      return lhs as? Int64 != expected
+      return lhs as? Int64 == expected
     case .doubleValue(let expected):
-      return lhs as? Double != expected
+      return lhs as? Double == expected
     case .timestampValue(let expected):
       return (lhs as? Date)?.timeIntervalSinceReferenceDate
-        != expected.timeIntervalSinceReferenceDate
+        == expected.timeIntervalSinceReferenceDate
     case .keyValue:
       fatalError("Comparison not supported in InMemoryDatastore yet")
     case .stringValue(let expected):
-      return lhs as? String != expected
+      return lhs as? String == expected
     case .blobValue(let expected):
-      return lhs as? Data != expected
+      return lhs as? Data == expected
     case .geoPointValue:
       fatalError("Comparison not supported in InMemoryDatastore yet")
     case .entityValue:
