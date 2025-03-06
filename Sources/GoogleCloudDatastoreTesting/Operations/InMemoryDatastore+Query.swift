@@ -156,6 +156,8 @@ extension InMemoryDatastore {
     lhs: [String: Any], rhs: [String: Any], orders: [Google_Datastore_V1_PropertyOrder]
   ) -> Bool {
     for order in orders {
+      let isAscending = order.direction == .ascending
+
       let propertyName = order.property.name
       let lhsProperty = lhs[propertyName]
       let rhsProperty = rhs[propertyName]
@@ -163,13 +165,13 @@ extension InMemoryDatastore {
         continue
       }
       guard let lhsProperty else {
-        return false
+        return !isAscending
       }
       guard let rhsProperty else {
-        return false
+        return !isAscending
       }
       if let result = compare(lhs: lhsProperty, rhs: rhsProperty) {
-        return result
+        return result == isAscending
       }
     }
     return true
