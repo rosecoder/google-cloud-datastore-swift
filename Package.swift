@@ -45,5 +45,9 @@ let package = Package(
       dependencies: [
         "GoogleCloudDatastore"
       ]),
+    .testTarget(
+      name: "GoogleCloudDatastoreTestingTests",
+      dependencies: ["GoogleCloudDatastoreTesting"]
+    ),
   ]
 )
