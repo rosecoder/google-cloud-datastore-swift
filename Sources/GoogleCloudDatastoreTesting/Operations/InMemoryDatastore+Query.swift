@@ -55,29 +55,56 @@ extension InMemoryDatastore {
         }
       }
 
+      // Handle the case where value is a base64 encoded string but filter.value is a blob
+      var processedValue = value
+      if let stringValue = value as? String,
+        case .blobValue = filter.value.valueType,
+        let decodedData = Data(base64Encoded: stringValue)
+      {
+        processedValue = decodedData
+      }
+
       switch filter.op {
       case .equal:
-        if !isEqual(lhs: value, rhs: filter.value) {
+        let result = isEqual(lhs: processedValue, rhs: filter.value)
+        if !result {
           return false
         }
       case .notEqual:
-        if isEqual(lhs: value, rhs: filter.value) {
+        let result = isEqual(lhs: processedValue, rhs: filter.value)
+        if result {
           return false
         }
       case .lessThan:
-        if !(isGreater(lhs: value, rhs: filter.value) ?? false) {
+        // For lessThan, we want to check if lhs < rhs
+        // compare(lhs, rhs) returns true if lhs < rhs
+        let comparisonResult = compare(
+          lhs: processedValue, rhs: getValueFromValueType(filter.value.valueType))
+        if comparisonResult != true {
           return false
         }
       case .lessThanOrEqual:
-        if !(isGreater(lhs: value, rhs: filter.value) ?? true) {
+        // For lessThanOrEqual, we want to check if lhs <= rhs
+        // compare(lhs, rhs) returns true if lhs < rhs, nil if lhs == rhs
+        let comparisonResult = compare(
+          lhs: processedValue, rhs: getValueFromValueType(filter.value.valueType))
+        if comparisonResult != true && comparisonResult != nil {
           return false
         }
       case .greaterThan:
-        if isGreater(lhs: value, rhs: filter.value) ?? false {
+        // For greaterThan, we want to check if lhs > rhs
+        // compare(lhs, rhs) returns false if lhs > rhs
+        let comparisonResult = compare(
+          lhs: processedValue, rhs: getValueFromValueType(filter.value.valueType))
+        if comparisonResult != false && comparisonResult != nil {
           return false
         }
       case .greaterThanOrEqual:
-        if isGreater(lhs: value, rhs: filter.value) ?? true {
+        // For greaterThanOrEqual, we want to check if lhs >= rhs
+        // compare(lhs, rhs) returns false if lhs > rhs, nil if lhs == rhs
+        let comparisonResult = compare(
+          lhs: processedValue, rhs: getValueFromValueType(filter.value.valueType))
+        if comparisonResult == true {
           return false
         }
       case .hasAncestor:
@@ -141,8 +168,8 @@ extension InMemoryDatastore {
       fatalError("Comparison not supported in InMemoryDatastore yet")
     case .stringValue(let expected):
       return compare(lhs: lhs, rhs: expected)
-    case .blobValue:
-      fatalError("Comparison not supported in InMemoryDatastore yet")
+    case .blobValue(let expected):
+      return compare(lhs: lhs, rhs: expected)
     case .geoPointValue:
       fatalError("Comparison not supported in InMemoryDatastore yet")
     case .entityValue:
@@ -202,6 +229,17 @@ extension InMemoryDatastore {
       if lhs == rhs { return nil }
       return lhs
     }
+    if let lhs = lhs as? Data, let rhs = rhs as? Data {
+      if lhs == rhs { return nil }
+      // Compare Data objects lexicographically
+      let minLength = min(lhs.count, rhs.count)
+      for i in 0..<minLength {
+        if lhs[i] != rhs[i] {
+          return lhs[i] < rhs[i]
+        }
+      }
+      return lhs.count < rhs.count
+    }
     fatalError("Unsupported type: \(type(of: lhs)), \(type(of: rhs))")
   }
 
@@ -236,5 +274,38 @@ extension InMemoryDatastore {
     var cursor: Cursor?
     return try await getKeys(
       query: query, cursor: &cursor, file: file, function: function, line: line)
+  }
+
+  private nonisolated func getValueFromValueType(
+    _ valueType: Google_Datastore_V1_Value.OneOf_ValueType?
+  ) -> Any {
+    guard let valueType = valueType else {
+      return NSNull()
+    }
+
+    switch valueType {
+    case .nullValue:
+      return NSNull()
+    case .booleanValue(let value):
+      return value
+    case .integerValue(let value):
+      return value
+    case .doubleValue(let value):
+      return value
+    case .timestampValue(let value):
+      return value
+    case .keyValue(let value):
+      return value
+    case .stringValue(let value):
+      return value
+    case .blobValue(let value):
+      return value
+    case .geoPointValue(let value):
+      return value
+    case .entityValue(let value):
+      return value
+    case .arrayValue(let value):
+      return value
+    }
   }
 }
