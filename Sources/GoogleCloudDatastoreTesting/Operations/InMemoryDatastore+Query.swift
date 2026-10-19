@@ -99,10 +99,10 @@ extension InMemoryDatastore {
         }
       case .greaterThan:
         // For greaterThan, we want to check if lhs > rhs
-        // compare(lhs, rhs) returns false if lhs > rhs
+        // compare(lhs, rhs) returns false if lhs > rhs, nil if lhs == rhs
         let comparisonResult = compare(
           lhs: processedValue, rhs: getValueFromValueType(filter.value.valueType))
-        if comparisonResult != false && comparisonResult != nil {
+        if comparisonResult != false {
           return false
         }
       case .greaterThanOrEqual:
