@@ -380,4 +380,72 @@ struct InMemoryDatastoreQueryTests {
     #expect(results2.contains(where: { $0.key.id == .named("user2") }))
     #expect(results2.contains(where: { $0.key.id == .named("user3") }))
   }
+
+  @Test func shouldFilterEntitiesByDate() async throws {
+    let now = Date(timeIntervalSinceReferenceDate: 800_000_000)
+    var user1 = UserWithLastSeen(
+      key: .named("user1"), email: "user1@example.com", lastSeen: now.addingTimeInterval(-60))
+    var user2 = UserWithLastSeen(key: .named("user2"), email: "user2@example.com", lastSeen: now)
+    var user3 = UserWithLastSeen(
+      key: .named("user3"), email: "user3@example.com", lastSeen: now.addingTimeInterval(60))
+
+    try await datastore.put(entity: &user1)
+    try await datastore.put(entity: &user2)
+    try await datastore.put(entity: &user3)
+
+    var lessThanOrEqualQuery = Query(UserWithLastSeen.self)
+    lessThanOrEqualQuery.filter(by: .lastSeen, where: .lessThanOrEqual(now))
+    let lessThanOrEqualResults = try await datastore.getEntities(
+      query: lessThanOrEqualQuery, file: #file, function: #function, line: #line)
+    #expect(Set(lessThanOrEqualResults.map(\.key.id)) == [.named("user1"), .named("user2")])
+
+    var lessThanQuery = Query(UserWithLastSeen.self)
+    lessThanQuery.filter(by: .lastSeen, where: .lessThan(now))
+    let lessThanResults = try await datastore.getEntities(
+      query: lessThanQuery, file: #file, function: #function, line: #line)
+    #expect(lessThanResults.map(\.key.id) == [.named("user1")])
+
+    var greaterThanOrEqualQuery = Query(UserWithLastSeen.self)
+    greaterThanOrEqualQuery.filter(by: .lastSeen, where: .greaterThanOrEqual(now))
+    let greaterThanOrEqualResults = try await datastore.getEntities(
+      query: greaterThanOrEqualQuery, file: #file, function: #function, line: #line)
+    #expect(Set(greaterThanOrEqualResults.map(\.key.id)) == [.named("user2"), .named("user3")])
+
+    var equalQuery = Query(UserWithLastSeen.self)
+    equalQuery.filter(by: .lastSeen, where: .equals(now))
+    let equalResults = try await datastore.getEntities(
+      query: equalQuery, file: #file, function: #function, line: #line)
+    #expect(equalResults.map(\.key.id) == [.named("user2")])
+  }
+
+  @Test func shouldOnlyReturnEntitiesInQueryNamespace() async throws {
+    let namespaceA = Namespace(rawValue: "a")
+    let namespaceB = Namespace(rawValue: "b")
+    var user1 = NamespacedUser(
+      key: .named("user1", namespace: namespaceA), email: "user1@example.com")
+    var user2 = NamespacedUser(
+      key: .named("user2", namespace: namespaceB), email: "user2@example.com")
+
+    try await datastore.put(entity: &user1)
+    try await datastore.put(entity: &user2)
+
+    let results = try await datastore.getEntities(
+      query: Query(NamespacedUser.self, namespace: namespaceA),
+      file: #file, function: #function, line: #line)
+
+    #expect(results == [user1])
+  }
+
+  @Test func shouldOnlyReturnEntitiesOfQueryKind() async throws {
+    var user = User(key: .named("user1"), email: "user1@example.com")
+    var userWithAge = UserWithAge(key: .named("user2"), email: "user2@example.com", age: 30)
+
+    try await datastore.put(entity: &user)
+    try await datastore.put(entity: &userWithAge)
+
+    let results = try await datastore.getEntities(
+      query: Query(User.self), file: #file, function: #function, line: #line)
+
+    #expect(results == [user])
+  }
 }
