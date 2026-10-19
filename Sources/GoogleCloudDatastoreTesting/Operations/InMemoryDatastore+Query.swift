@@ -12,7 +12,7 @@ extension InMemoryDatastore {
     function: String,
     line: UInt
   ) async throws -> [Entity] {
-    let toSkip = cursor.flatMap { Int($0.stringValue) } ?? 0
+    let toSkip = cursor.flatMap { Int(String(decoding: $0.rawValue, as: UTF8.self)) } ?? 0
 
     let entities =
       storage
@@ -30,14 +30,11 @@ extension InMemoryDatastore {
       .sorted { compare(lhs: $0.1, rhs: $1.1, orders: query.orders) }
       .map { $0.0 }
 
-    let result: [Entity] =
-      if let limit = query.limit {
-        Array(entities[toSkip..<min(entities.count, toSkip + Int(limit))])
-      } else {
-        Array(entities[toSkip...])
-      }
+    let start = min(toSkip, entities.count)
+    let end = query.limit.map { min(entities.count, start + Int($0)) } ?? entities.count
+    let result = Array(entities[start..<end])
 
-    cursor = Cursor(stringValue: String(toSkip + result.count))
+    cursor = end < entities.count ? Cursor(rawValue: Data(String(end).utf8)) : nil
 
     return result
   }

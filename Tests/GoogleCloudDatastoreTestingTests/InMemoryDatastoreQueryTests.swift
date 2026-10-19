@@ -246,6 +246,27 @@ struct InMemoryDatastoreQueryTests {
     }
   }
 
+  @Test func shouldPageThroughAllEntitiesUntilCursorIsNil() async throws {
+    for index in 1...5 {
+      var user = User(key: .named("user\(index)"), email: "user\(index)@example.com")
+      try await datastore.put(entity: &user)
+    }
+
+    let query = Query(User.self, limit: 2)
+    var cursor: Cursor?
+    var pageSizes: [Int] = []
+    var ids: [ID] = []
+    repeat {
+      let page = try await datastore.getEntities(
+        query: query, cursor: &cursor, file: #file, function: #function, line: #line)
+      pageSizes.append(page.count)
+      ids += page.map(\.key.id)
+    } while cursor != nil && pageSizes.count < 10
+
+    #expect(pageSizes == [2, 2, 1])
+    #expect(Set(ids).count == 5)
+  }
+
   @Test func shouldReturnKeysInsteadOfEntities() async throws {
     // Setup test data
     var user1 = User(key: .named("user1"), email: "user1@example.com")
