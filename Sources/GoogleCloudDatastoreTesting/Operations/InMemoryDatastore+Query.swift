@@ -1,5 +1,6 @@
 import Foundation
 import GoogleCloudDatastore
+import SwiftProtobuf
 
 extension InMemoryDatastore {
 
@@ -13,9 +14,14 @@ extension InMemoryDatastore {
   ) async throws -> [Entity] {
     let toSkip = cursor.flatMap { Int($0.stringValue) } ?? 0
 
-    let entities = storage.values
-      .compactMap { (data: Data) -> (Entity, [String: Any])? in
-        guard let decoded = try? decoder.decode(Entity.self, from: data) else {
+    let entities =
+      storage
+      .compactMap { (storedKey: String, data: Data) -> (Entity, [String: Any])? in
+        guard
+          let decoded = try? decoder.decode(Entity.self, from: data),
+          decoded.key.namespace == query.namespace,
+          storageKey(fromEntityKey: decoded.key) == storedKey
+        else {
           return nil
         }
         return (decoded, try! JSONSerialization.jsonObject(with: data) as! [String: Any])
@@ -135,8 +141,7 @@ extension InMemoryDatastore {
     case .doubleValue(let expected):
       return lhs as? Double == expected
     case .timestampValue(let expected):
-      return (lhs as? Date)?.timeIntervalSinceReferenceDate
-        == expected.timeIntervalSinceReferenceDate
+      return lhs as? Double == expected.date.timeIntervalSinceReferenceDate
     case .keyValue:
       fatalError("Comparison not supported in InMemoryDatastore yet")
     case .stringValue(let expected):
@@ -205,6 +210,10 @@ extension InMemoryDatastore {
   }
 
   private nonisolated func compare(lhs: Any, rhs: Any) -> Bool? {
+    // Dates are stored as JSON numbers (seconds since reference date), but filter values are timestamps.
+    if let rhs = rhs as? Google_Protobuf_Timestamp, let lhs = lhs as? Double {
+      return compare(lhs: Date(timeIntervalSinceReferenceDate: lhs), rhs: rhs.date)
+    }
     if let lhs = lhs as? String, let rhs = rhs as? String {
       if lhs == rhs { return nil }
       return lhs < rhs
