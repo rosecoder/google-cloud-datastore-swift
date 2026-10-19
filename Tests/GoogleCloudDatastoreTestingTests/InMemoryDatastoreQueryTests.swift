@@ -54,11 +54,7 @@ struct InMemoryDatastoreQueryTests {
     let results = try await datastore.getEntities(
       query: query, file: #file, function: #function, line: #line)
 
-    // All entities are returned because our comparison logic is inverted for greaterThan
-    // The current implementation returns entities where the comparison result is not true
-    #expect(results.count == 2)
-    #expect(results.contains(where: { $0.key.id == .named("user1") }))
-    #expect(results.contains(where: { $0.key.id == .named("user2") }))
+    #expect(results.map(\.key.id) == [.named("user2")])
   }
 
   @Test func shouldFilterEntitiesByGreaterThanOrEqualCondition() async throws {
@@ -78,10 +74,7 @@ struct InMemoryDatastoreQueryTests {
     let results = try await datastore.getEntities(
       query: query, file: #file, function: #function, line: #line)
 
-    // Note: The InMemoryDatastore implementation might have different behavior than expected
-    // Adjust expectations based on actual implementation
-    #expect(results.count >= 1)
-    #expect(results.contains(where: { $0.age >= 25 }))
+    #expect(Set(results.map(\.key.id)) == [.named("user1"), .named("user2")])
   }
 
   @Test func shouldFilterEntitiesByLessThanCondition() async throws {
@@ -362,12 +355,7 @@ struct InMemoryDatastoreQueryTests {
     let results = try await datastore.getEntities(
       query: query, file: #file, function: #function, line: #line)
 
-    // All entities are returned because our comparison logic is inverted for greaterThan
-    // The current implementation returns entities where the comparison result is not true
-    #expect(results.count == 3)
-    #expect(results.contains(where: { $0.key.id == .named("user1") }))
-    #expect(results.contains(where: { $0.key.id == .named("user2") }))
-    #expect(results.contains(where: { $0.key.id == .named("user3") }))
+    #expect(Set(results.map(\.key.id)) == [.named("user1"), .named("user2")])
 
     // Query for users with binary data less than smallData
     var query2 = Query(UserWithBinaryData.self)
@@ -410,6 +398,12 @@ struct InMemoryDatastoreQueryTests {
     let greaterThanOrEqualResults = try await datastore.getEntities(
       query: greaterThanOrEqualQuery, file: #file, function: #function, line: #line)
     #expect(Set(greaterThanOrEqualResults.map(\.key.id)) == [.named("user2"), .named("user3")])
+
+    var greaterThanQuery = Query(UserWithLastSeen.self)
+    greaterThanQuery.filter(by: .lastSeen, where: .greaterThan(now))
+    let greaterThanResults = try await datastore.getEntities(
+      query: greaterThanQuery, file: #file, function: #function, line: #line)
+    #expect(greaterThanResults.map(\.key.id) == [.named("user3")])
 
     var equalQuery = Query(UserWithLastSeen.self)
     equalQuery.filter(by: .lastSeen, where: .equals(now))
